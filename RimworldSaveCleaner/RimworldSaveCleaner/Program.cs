@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace RimworldSaveCleaner
 {
+    using System.IO;
     using System.Xml;
 
     class Program
     {
         static void Main(string[] args)
         {
+            // Load the save file.
             XmlDocument modifiedSave = new XmlDocument();
-            modifiedSave.Load("./Saves/Graton.rws");
+            modifiedSave.Load(args[0]);
 
+            // Get the pawns that should be kept under all circumstances.
             var forcefullyKeptPawns = modifiedSave.DocumentElement.SelectSingleNode("game/world/worldPawns/pawnsForcefullyKeptAsWorldPawns");
-            var alivePawns = modifiedSave.DocumentElement.SelectSingleNode("game/world/worldPawns/pawnsAlive");
-            var deadPawns = modifiedSave.DocumentElement.SelectSingleNode("game/world/worldPawns/pawnsDead");
-
             var forcefullyKeptPawnsIDs = new List<string>();
             foreach (XmlNode keptPawn in forcefullyKeptPawns.ChildNodes)
             {
@@ -27,7 +27,9 @@ namespace RimworldSaveCleaner
 
                 forcefullyKeptPawnsIDs.Add(cleandedPawnId);
             }
-            
+
+            // Remove all alive pawns that are not forcefully kept
+            var alivePawns = modifiedSave.DocumentElement.SelectSingleNode("game/world/worldPawns/pawnsAlive");
             var alivePawnsToRemove = new List<XmlNode>();
             foreach (XmlNode alivePawn in alivePawns.ChildNodes)
             {
@@ -43,6 +45,8 @@ namespace RimworldSaveCleaner
                 alivePawns.RemoveChild(xmlNode);
             }
 
+            // Remove all dead pawns that are not forcefully kept
+            var deadPawns = modifiedSave.DocumentElement.SelectSingleNode("game/world/worldPawns/pawnsDead");
             var deadPawnsToRemove = new List<XmlNode>();
             foreach (XmlNode deadPawn in deadPawns.ChildNodes)
             {
@@ -58,9 +62,9 @@ namespace RimworldSaveCleaner
                 deadPawns.RemoveChild(xmlNode);
             }
 
-            modifiedSave.Save("./Saves/ModifiedSave.rws");
-
-            Console.WriteLine(forcefullyKeptPawnsIDs);
+            // Save the modified file.
+            Directory.CreateDirectory("./ModifiedSaves/");
+            modifiedSave.Save("./ModifiedSaves/ModifiedSave.rws");
         }
     }
 }
